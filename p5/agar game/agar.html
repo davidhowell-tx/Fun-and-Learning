@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.16/p5.min.js"></script>
+</head>
+
+<body>
+<script>
+
+var blob;
+var blobRadius = 32;
+
+var blobs = [];
+var foodRadius = 8;
+var foodCount = 1000;
+
+var zoom = 1;
+var worldWidth = 3000;
+var worldHeight = 3000;
+
+var yoff = 0;
+
+function Blob(x, y, radius) {
+    this.position = createVector(x, y);
+    this.radius = radius;
+}
+Blob.prototype.draw = function() {
+    fill(255);
+    noStroke();
+    //ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
+    push();
+    translate(this.position.x, this.position.y);
+    beginShape();
+    var xoff = 0;
+    for (var a = 0; a < TWO_PI; a += 0.1) {
+        var offset = map(noise(xoff + yoff), 0, 1, -2, 2);
+        var r = this.radius + offset;
+        var x = r * cos(a);
+        var y = r * sin(a);
+        vertex(x,y);
+        xoff += 0.1;
+    }
+    endShape();
+    pop();
+    yoff += 0.01;
+}
+Blob.prototype.move = function() {
+    var velocity = createVector(mouseX - (width / 2), mouseY - (height / 2));
+    velocity.setMag(3);
+    this.position.add(velocity);
+
+    this.position.x = constrain(this.position.x, -worldWidth, worldWidth);
+    this.position.y = constrain(this.position.y, -worldHeight, worldHeight);
+}
+Blob.prototype.eats = function(food) {
+    var d = dist(this.position.x, this.position.y, food.position.x, food.position.y);
+    if (d < this.radius + food.radius) {
+        var newArea = PI * sq(this.radius) + PI * sq(food.radius);
+        this.radius = sqrt(newArea / PI);
+
+        return true;
+    } else {
+        return false;
+    }
+}
+function setup() {
+    createCanvas(800,800);
+
+    blob = new Blob(0, 0, blobRadius);
+
+    for (var i = 0; i < foodCount; i++) {
+        blobs.push(new Blob(random(-worldWidth, worldWidth), random(-worldHeight, worldHeight), foodRadius));
+    }
+}
+
+function draw() {
+    background(0);
+    translate(width / 2, height / 2);
+    var newZoom = 64 / blob.radius;
+    zoom = lerp(zoom, newZoom, 0.1);
+    //translate((width / 2) - blob.position.x, (height / 2) - blob.position.y);
+    scale(zoom);
+    translate(-blob.position.x, -blob.position.y);
+
+    for (var i = blobs.length - 1; i >= 0 ; i--) {
+        blobs[i].draw();
+        if (blob.eats(blobs[i])) {
+            blobs.splice(i, 1);
+        }
+    }
+    blob.move();
+    blob.draw();
+}
+</script>
+</body>
+</html>

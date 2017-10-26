@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.16/p5.min.js"></script>
+</head>
+
+<body>
+
+<script>
+// Eel Properties
+var eel;
+var eelMoveSpeed = 1;
+
+// Food Properties
+var food = [];
+
+// Grid Properties
+var cols = 25;
+var rows = 25;
+var cellHeight;
+var cellWidth;
+
+function Food() {
+    this.x = floor(random(cols)) * cellWidth;
+    this.y = floor(random(rows)) * cellHeight;
+}
+Food.prototype.draw = function () {
+    fill(255, 0, 100);
+    rect(this.x, this.y, cellWidth, cellHeight);
+}
+
+function Eel(x, y) {
+    this.x = floor(cols/2) * cellWidth;
+    this.y = floor(rows/2) * cellHeight;
+    this.xdir = 0;
+    this.ydir = 0;
+
+    this.length = 0;
+    this.tail = [];
+}
+Eel.prototype.move = function() {
+    if (this.length === this.tail.length) {
+        for (var i = 0; i < this.tail.length - 1; i++) {
+            this.tail[i] = this.tail[i + 1];
+        }
+    }
+    this.tail[this.length-1] = createVector(this.x, this.y);
+
+    this.x = this.x + this.xdir;
+    this.y = this.y + this.ydir;
+
+    this.x = constrain(this.x, 0, (cols*cellWidth) - cellWidth);
+    this.y = constrain(this.y, 0, (rows*cellHeight) - cellHeight);
+}
+Eel.prototype.draw = function() {
+    fill(255);
+    for (var i = 0; i < this.tail.length; i++) {
+        rect(this.tail[i].x, this.tail[i].y, cellWidth, cellHeight);
+    }
+    rect(this.x, this.y, cellWidth, cellHeight);
+}
+Eel.prototype.dir = function(xdir, ydir) {
+    this.xdir = xdir;
+    this.ydir = ydir;
+}
+Eel.prototype.eat = function(food) {
+    var d = dist(this.x, this.y, food.x, food.y);
+
+    if (d < 1) {
+        this.length++;
+        return true;
+    } else {
+        return false;
+    }
+}
+Eel.prototype.death = function() {
+    for (var i = 0; i < this.tail.length; i++) {
+        var pos = this.tail[i];
+        var d = dist(this.x, this.y, pos.x, pos.y);
+
+        if (d < 1) {
+            this.length = 0;
+            this.tail = [];
+        }
+    }
+}
+
+function setup() {
+    createCanvas(800, 800);
+    cellWidth = width / cols;
+    cellHeight = height / rows;
+    frameRate(10);
+    eel = new Eel();
+
+    food.push(new Food());
+}
+
+function draw() {
+    background(0);
+    eel.death();
+    eel.move();
+    eel.draw();
+
+    for (var i = food.length - 1; i >= 0; i--) {
+        if (eel.eat(food[i])) {
+            food.splice(i, 1);
+            food.push(new Food());
+        } else {
+            food[i].draw();
+        }
+    }
+}
+
+function keyPressed() {
+    switch (keyCode) {
+        case UP_ARROW:
+            eel.dir(0, -eelMoveSpeed * cellHeight);
+            break;
+        case DOWN_ARROW:
+            eel.dir(0, eelMoveSpeed * cellHeight);
+            break;
+        case LEFT_ARROW:
+            eel.dir(-eelMoveSpeed * cellWidth, 0);
+            break;
+        case RIGHT_ARROW:
+            eel.dir(eelMoveSpeed * cellWidth, 0);
+            break;
+        default:
+    }
+}
+
+</script>
+
+</body>
+
+</html>

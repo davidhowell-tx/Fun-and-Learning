@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.16/p5.min.js"></script>
+</head>
+
+<body>
+<script>
+
+// Paddle Properties
+var leftPaddle;
+var rightPaddle;
+var paddlePadding = 5;
+var paddleHeight = 70;
+var paddleWidth = 10;
+var paddleVelocity = 10;
+
+var leftScore = 0;
+var rightScore = 0;
+
+// Ball Properties
+var ball;
+var ballDiameter = 20;
+var ballXVelocity = 5;
+var ballYVelocity = 5;
+
+// AI Properties
+var aiPaddleSpeed = 5;
+
+function Paddle(x, y) {
+    this.x = x;
+    this.y = y;
+    this.yvelocity = 0;
+    this.width = paddleWidth;
+    this.height = paddleHeight;
+}
+Paddle.prototype.draw = function() {
+    fill(255);
+    stroke(0);
+    rect(this.x, this.y, this.width, this.height);
+}
+Paddle.prototype.move = function() {
+    this.y = this.y + (this.yvelocity * paddleVelocity);
+
+    this.y = constrain(this.y, 0, height - paddleHeight);
+}
+Paddle.prototype.automove = function(ball) {
+    if (this.y < ball.y - ballDiameter/2) {
+        this.y = this.y + aiPaddleSpeed;
+    } else if (this.y + paddleHeight > ball.y + ballDiameter/2) {
+        this.y = this.y - aiPaddleSpeed;
+    }
+
+    this.y = constrain(this.y, 0, height - paddleHeight);
+
+}
+
+function Ball() {
+    this.x = width / 2;
+    this.y = height / 2;
+    this.xvelocity = random([-ballXVelocity, ballXVelocity]);
+    this.yvelocity = floor(random(-ballYVelocity, ballYVelocity));
+}
+Ball.prototype.reset = function() {
+    this.x = width / 2;
+    this.y = height / 2;
+    this.xvelocity = random([-ballXVelocity, ballXVelocity]);
+    this.yvelocity = floor(random(-ballYVelocity, ballYVelocity));
+}
+Ball.prototype.draw = function() {
+    fill(255);
+    stroke(0);
+    ellipse(this.x, this.y, ballDiameter, ballDiameter);
+}
+Ball.prototype.move = function() {
+    this.x = this.x + this.xvelocity;
+    this.y = this.y + this.yvelocity;
+
+    // Ball hits top or bottom
+    if (this.y < ballDiameter / 2 || this.y > height - (ballDiameter / 2)) {
+        this.yvelocity *= -1;
+    }
+
+    this.hits(leftPaddle);
+    this.hits(rightPaddle);
+
+    if (this.x < ballDiameter / 2) {
+        // Right Scores
+        rightScore++;
+        this.reset();
+    }
+
+    if (this.x > width - (ballDiameter / 2)) {
+        // Left Scores
+        leftScore++;
+        this.reset();
+    }
+
+    this.x = constrain(this.x, ballDiameter / 2, width - (ballDiameter / 2));
+}
+Ball.prototype.hits = function (paddle) {
+    if (paddle.x < width / 2) {
+        // Checking if paddle will hit left paddle
+        if (this.y - (ballDiameter / 2) < paddle.y + paddle.height && this.y + (ballDiameter / 2) > paddle.y) {
+            if (this.x - (ballDiameter / 2) < paddle.x + paddle.width) {
+                // HIT!
+                this.xvelocity *= -1;
+
+                // Check segment hit
+                if (this.y < paddle.y + (paddleHeight * 1/7)) {
+                    this.yvelocity = -7;
+                } else if (this.y < paddle.y + (paddleHeight * 2/7)) {
+                    this.yvelocity = -5;
+                } else if (this.y > paddle.y + (paddleHeight * 6/7)) {
+                    this.yvelocity = 7;
+                } else if (this.y > paddle.y + (paddleHeight * 5/7)) {
+                    this.yvelocity = 5;
+                }
+            }
+        }
+    } else {
+        // Checking if paddle will hit right paddle
+        if (this.y - (ballDiameter / 2) < paddle.y + paddle.height && this.y + (ballDiameter / 2) > paddle.y) {
+            if (this.x + (ballDiameter / 2) > paddle.x) {
+                // HIT!
+                this.xvelocity *= -1;
+
+                // Check segment hit
+                if (this.y < paddle.y + (paddleHeight * 1/7)) {
+                    this.yvelocity = -7;
+                } else if (this.y < paddle.y + (paddleHeight * 2/7)) {
+                    this.yvelocity = -5;
+                } else if (this.y > paddle.y + (paddleHeight * 6/7)) {
+                    this.yvelocity = 7;
+                } else if (this.y > paddle.y + (paddleHeight * 5/7)) {
+                    this.yvelocity = 5;
+                }
+            }
+        }
+    }
+}
+
+function setup() {
+  createCanvas(800, 600);
+  ball = new Ball();
+  leftPaddle = new Paddle(paddlePadding, (height / 2) - paddleHeight);
+  rightPaddle = new Paddle(width - paddlePadding - paddleWidth, (height / 2) - paddleHeight);
+}
+
+function draw() {
+  background(220);
+  ball.move();
+  ball.draw();
+
+  leftPaddle.move();
+  leftPaddle.draw();
+  rightPaddle.automove(ball);
+  rightPaddle.draw();
+
+  // Score Board
+  textSize(18);
+  fill(0);
+  textAlign(LEFT);
+  text(leftScore, 20, 25);
+  textAlign(RIGHT);
+  text(rightScore, width - 20, 25);
+}
+
+function keyPressed() {
+    // if (key == 'W') {
+    //     leftPaddle.yvelocity = -1;
+    // } else if (key == 'S') {
+    //     leftPaddle.yvelocity = 1;
+    // }
+
+    // if (keyCode === UP_ARROW) {
+    //     rightPaddle.yvelocity = -1;
+    // } else if (keyCode === DOWN_ARROW) {
+    //     rightPaddle.yvelocity = 1;
+    // }
+
+    if (keyCode === UP_ARROW) {
+        leftPaddle.yvelocity = -1;
+    } else if (keyCode === DOWN_ARROW) {
+        leftPaddle.yvelocity = 1;
+    }
+
+}
+
+function keyReleased() {
+    // if (key == 'W') {
+    //     if (leftPaddle.yvelocity == -1) {
+    //         leftPaddle.yvelocity = 0;
+    //     }
+    // } else if (key == 'S') {
+    //     if (leftPaddle.yvelocity == 1) {
+    //         leftPaddle.yvelocity = 0;
+    //     }
+    // }
+
+    // if (keyCode === UP_ARROW) {
+    //     if (rightPaddle.yvelocity == -1) {
+    //         rightPaddle.yvelocity = 0;
+    //     }
+    // } else if (keyCode === DOWN_ARROW) {
+    //     if (rightPaddle.yvelocity == 1) {
+    //         rightPaddle.yvelocity = 0;
+    //     }
+    // }
+
+    if (keyCode === UP_ARROW) {
+        if (leftPaddle.yvelocity == -1) {
+            leftPaddle.yvelocity = 0;
+        }
+    } else if (keyCode === DOWN_ARROW) {
+        if (leftPaddle.yvelocity == 1) {
+            leftPaddle.yvelocity = 0;
+        }
+    }
+}
+</script>
+</body>
+</html>

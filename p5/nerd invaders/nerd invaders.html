@@ -1,0 +1,152 @@
+<html>
+<head>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.16/p5.min.js"></script>
+	<script src="bullet.js"></script>
+	<script src="nerd.js"></script>
+	<script src="ship.js"></script>
+</head>
+<body>
+<script>
+var edge = false;
+
+// Configure the Ship
+var ship;
+var shipHeight = 15;
+var shipMoveSpeed = 5;
+
+// Configure the Nerds
+var nerds = [];
+var nerdDistance = 40;
+var nerdDiameter = 30;
+var nerdCount;
+var nerdYDrop = 8;
+var nerdMinSpeed = 2;
+var nerdMaxSpeed = 14;
+var deathTimer = 10;
+var nerdSpeedIncrement;
+
+// Configure the Bullets
+var bullets = [];
+var bulletDiameter = 8;
+var bulletSpeed = 10;
+var bulletMaximum = 4;
+
+function preload() {
+	Hailey = loadImage('../images/Hailey2.png');
+	Fire = loadImage('../images/Fire.png');
+}
+
+function removeFromArray(arr, elt) {
+	for (var i = arr.length - 1; i >= 0; i--) {
+		if (arr[i] === elt) {
+			arr.splice(i, 1);
+		}
+	}
+}
+
+function setup() {
+	createCanvas(1000,600);
+	ship = new Ship();
+
+	// Calculate number of Nerds
+	var nerdCount = floor((width - nerdDistance) / (nerdDiameter + nerdDistance));
+	for (var i = 0; i < nerdCount; i++) {
+		nerds.push(new Nerd(nerdDistance + (i * nerdDistance) + nerdDiameter/2 + (i * nerdDiameter), nerdDiameter/2 + nerdDistance));
+	}
+
+	// Calculate speed increment per nerd death
+	var speedDifference = nerdMaxSpeed - nerdMinSpeed;
+	nerdSpeedIncrement = speedDifference / nerdCount;
+}
+
+
+
+function draw() {
+	background(50,89,100);
+	ship.show();
+	ship.move();
+
+	edge = false;
+	for (var i = 0; i < nerds.length; i++) {
+		nerds[i].show();
+		nerds[i].move();
+
+		if (nerds[i].x > width - nerdDiameter/2 || nerds[i].x < 0 + nerdDiameter/2) {
+			edge = true;
+		}
+	}
+	if (edge) {
+		for (var i = 0; i < nerds.length; i++) {
+			nerds[i].shiftDown();
+		}
+	}
+
+	// Draw Bullets
+	for (var i = 0; i < bullets.length; i++) {
+		bullets[i].show();
+		bullets[i].move();
+	}
+
+	// If a bullet hits a nerd, destroy both objects
+	for (var i = bullets.length - 1; i >= 0; i--) {
+		for (var j = nerds.length - 1; j >= 0; j--) {
+			if (bullets[i].hits(nerds[j])) {
+				bullets.splice(i, 1);
+				nerds[j].dying = true;
+				for (var i = 0; i < nerds.length; i++) {
+					nerds[i].increaseSpeed(nerdSpeedIncrement);
+				}
+				return;
+			}
+		}
+	}
+
+	// If a nerd is dying, increment its deathstage until it dies
+	for (var i = nerds.length - 1; i >= 0; i--) {
+		if (nerds[i].dying) {
+			if (nerds[i].deathStage < deathTimer) {
+				nerds[i].deathStage++;
+			} else {
+				nerds.splice(i, 1);
+			}
+		}
+	}
+
+	// Increase Nerd Speed based on number of remaining Nerds
+
+
+	// Remove bullets as they leave the screen
+	for (var i = bullets.length - 1; i >= 0; i--) {
+		if (bullets[i].y + bulletDiameter / 2 < 0) {
+			removeFromArray(bullets, bullets[i]);
+		}
+	}
+}
+
+function keyPressed() {
+	if (keyCode === RIGHT_ARROW) {
+		ship.setDir(1);
+	} else if (keyCode === LEFT_ARROW) {
+		ship.setDir(-1);
+	}
+	if (key === ' ') {
+		if (bullets.length < bulletMaximum) {
+			bullets.push(new Bullet(ship.x, ship.y - shipHeight));
+		}
+	}
+}
+
+function keyReleased() {
+	if (keyCode === RIGHT_ARROW) {
+		if (ship.xdir === 1) {
+			ship.setDir(0);
+		}
+	} else if (keyCode === LEFT_ARROW) {
+		if (ship.xdir === -1) {
+			ship.setDir(0);
+		}
+	}
+}
+</script>
+</body>
+</html>

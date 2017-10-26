@@ -1,0 +1,33 @@
+<html>
+<head>
+	<script src="p5.min.js"></script>
+</head>
+<body>
+<script>
+var stripeWidth = 50;
+
+function Bug(x, y) {
+	this.x = x;
+	this.y = y;
+}
+function setup() {
+	createCanvas(600,400);
+
+	
+}
+
+function draw() {
+	background(50,89,100);
+	stroke(255);
+	var numHorizontalStripes = floor(width / stripeWidth);
+	for (var i = 0; i <= numHorizontalStripes; i++) {
+		line(i*stripeWidth,0,0,i*stripeWidth);
+	}
+	var numVerticalStripes = floor(height / stripeWidth);
+	for (var j = 0; j <= numVerticalStripes; j++) {
+		line(width,j*stripeWidth,height,(j * stripeWidth) + (i * stripeWidth));
+	}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.16/p5.min.js"></script>
+<script src="./cell.js"></script>
+</head>
+<body>
+<script>
+var cols = 25;
+var rows = 25;
+var bombCount = 0;
+var bombRatio = 0.05; // 0 to 1
+var grid;
+var cellWidth;
+var gameState = "Playing";
+
+// Track the remaining cells to easily know when player wins
+var cellsToClear = [];
+var cellsWithBomb = [];
+
+function removeFromArray(arr, elt) {
+	for (i = arr.length - 1; i >= 0; i--) {
+		if (arr[i] == elt) {
+			arr.splice(i, 1);
+		}
+	}
+}
+
+function make2DArray(cols, rows) {
+	var arr = new Array(cols);
+	for (var i = 0; i < arr.length; i++) {
+		arr[i] = new Array(rows);
+	}
+	return arr;
+}
+
+function gameLost() {
+	for (var i = 0; i < cols; i++) {
+		for (var j = 0; j < rows; j++) {
+			if (grid[i][j].state == "hidden") {
+				grid[i][j].reveal();
+			}
+		}
+	}
+}
+
+function setup() {
+	createCanvas(401,401);
+	//console.log("Bomb sweeper!");
+
+	var tempWidth = floor(width/cols);
+	var tempHeight = floor(height/rows);
+
+	if (tempWidth < tempHeight) {
+		cellWidth = tempWidth;
+	} else {
+		cellWidth = tempHeight;
+	}
+	//console.log("Cell size is " + cellWidth + " by " + cellWidth);
+
+	grid = make2DArray(cols, rows);
+
+	for (var i = 0; i < cols; i++) {
+		for (var j = 0; j < rows; j++) {
+			grid[i][j] = new Cell(i, j);
+		}
+	}
+
+	for (var i = 0; i < cols; i++) {
+		for (var j = 0; j < rows; j++) {
+			grid[i][j].countNeighbors();
+		}
+	}
+
+	//console.log(cellsToClear);
+}
+
+function mousePressed() {
+	for (var i = 0; i < cols; i++) {
+		for (var j = 0; j < rows; j++) {
+			if (grid[i][j].contains(mouseX, mouseY)) {
+				//console.log("Clicked in cell " + i + ", " + j);
+				//console.log("Cell state was " + grid[i][j].state);
+				if (grid[i][j].state == "hidden") {
+					grid[i][j].flag();
+				} else if (grid[i][j].state == "flagged") {
+					grid[i][j].reveal();
+					if (grid[i][j].bomb) {
+						gameState = "Lost";
+						gameLost();
+					}
+				}
+			}
+		}
+	}
+}
+
+function draw() {
+	background(255);
+	for (var i = 0; i < cols; i++) {
+		for (var j = 0; j < rows; j++) {
+			grid[i][j].show();
+		}
+	}
+
+	if (gameState == "Lost") {
+		fill(180);
+		rect(width/2 - 75,height/2 - 30, 150, 45);
+		stroke(255,0,0);
+		fill(255, 0, 0);
+		textSize(25);
+		textAlign(CENTER);
+		text("YOU LOSE!", width/2, height/2);
+	} else if (gameState == "Won") {
+		fill(180);
+		rect(width/2 - 75,height/2 - 30, 150, 45);
+		stroke(0,255,0);
+		fill(0);
+		textSize(25);
+		textAlign(CENTER);
+		text("YOU WIN!", width/2, height/2);
+	}
+}
+</script>
+</body>
+</html>
